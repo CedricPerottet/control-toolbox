@@ -61,8 +61,8 @@ EstimatorStateBoxConstraint<STATE_DIM, SCALAR>::stateClipping(const state_vector
         {
             if (sparsity_vec_[i_state_dim] != 0)
             {
-                x_clipped[i_state_dim] = min(x_clipped[i_state_dim], ub_[i_constraint]);
-                x_clipped[i_state_dim] = max(x_clipped[i_state_dim], lb_[i_constraint]);
+                x_clipped[i_state_dim] = std::min(x_clipped[i_state_dim], ub_[i_constraint]);
+                x_clipped[i_state_dim] = std::max(x_clipped[i_state_dim], lb_[i_constraint]);
                 i_constraint++;
             }
         }

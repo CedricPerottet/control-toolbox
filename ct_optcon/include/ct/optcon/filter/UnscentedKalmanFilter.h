@@ -86,6 +86,8 @@ public:
     UnscentedKalmanFilter(std::shared_ptr<SystemModelBase<STATE_DIM, CONTROL_DIM, SCALAR>> f,
         std::shared_ptr<LinearMeasurementModel<OUTPUT_DIM, STATE_DIM, SCALAR>> h,
         const state_vector_t& x0 = state_vector_t::Zero(),
+        const ct::optcon::EstimatorStateBoxConstraint<STATE_DIM, SCALAR>& box_constraint =
+            ct::optcon::EstimatorStateBoxConstraint<STATE_DIM, SCALAR>(),
         SCALAR alpha = SCALAR(1.0),
         SCALAR beta = SCALAR(2.0),
         SCALAR kappa = SCALAR(0.0),
@@ -94,7 +96,9 @@ public:
     //! Constructor from settings.
     UnscentedKalmanFilter(std::shared_ptr<SystemModelBase<STATE_DIM, CONTROL_DIM, SCALAR>> f,
         std::shared_ptr<LinearMeasurementModel<OUTPUT_DIM, STATE_DIM, SCALAR>> h,
-        const UnscentedKalmanFilterSettings<STATE_DIM, SCALAR>& ukf_settings);
+        const UnscentedKalmanFilterSettings<STATE_DIM, SCALAR>& ukf_settings,
+        const ct::optcon::EstimatorStateBoxConstraint<STATE_DIM, SCALAR>& box_constraint =
+            ct::optcon::EstimatorStateBoxConstraint<STATE_DIM, SCALAR>());
 
     //! Estimator predict method.
     const state_vector_t& predict(const control_vector_t& u,
@@ -152,15 +156,15 @@ public:
     Eigen::Matrix<SCALAR, DIM, 1> computePredictionFromSigmaPoints(const SigmaPoints<DIM>& sigmaPoints);
 
 private:
-    state_matrix_t P_;                                          //! Covariance matrix.
     Eigen::Matrix<SCALAR, SigmaPointCount, 1> sigmaWeights_m_;  //! Sigma measurement weights.
     Eigen::Matrix<SCALAR, SigmaPointCount, 1> sigmaWeights_c_;  //! Sigma covariance weights.
     SigmaPoints<STATE_DIM> sigmaStatePoints_;                   //! Sigma points.
     SCALAR alpha_;  //! Scaling parameter for spread of sigma points (usually \f$ 1E-4 \leq \alpha \leq 1 \f$)
     SCALAR beta_;   //! Parameter for prior knowledge about the distribution (\f$ \beta = 2 \f$ is optimal for Gaussian)
     SCALAR kappa_;  //! Secondary scaling parameter (usually 0)
-    SCALAR gamma_;  //! \f$ \gamma = \sqrt{L + \lambda} \f$ with \f$ L \f$ being the state dimensionality
-    SCALAR lambda_;  //! \f$ \lambda = \alpha^2 ( L + \kappa ) - L\f$ with \f$ L \f$ being the state dimensionality
+    state_matrix_t P_;  //! Covariance matrix.
+    SCALAR gamma_;      //! \f$ \gamma = \sqrt{L + \lambda} \f$ with \f$ L \f$ being the state dimensionality
+    SCALAR lambda_;     //! \f$ \lambda = \alpha^2 ( L + \kappa ) - L\f$ with \f$ L \f$ being the state dimensionality
 };
 
 }  // namespace optcon

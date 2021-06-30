@@ -17,6 +17,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/exampleDir.h.in ${CMAKE_CURRENT_SOURC
 # target_link_libraries(ex_KalmanFiltering ct_optcon)
 # list(APPEND optcon_ex_TARGETS ex_KalmanFiltering)
 
+add_executable(ex_UKF UnscentedKalmanFiltering.cpp)
+target_link_libraries(ex_UKF ct_optcon)
+list(APPEND optcon_ex_TARGETS ex_UKF)
+
 # add_executable(ex_KalmanDisturbanceFiltering KalmanDisturbanceFiltering.cpp)
 # target_link_libraries(ex_KalmanDisturbanceFiltering ct_optcon )
 # list(APPEND optcon_ex_TARGETS ex_KalmanDisturbanceFiltering)

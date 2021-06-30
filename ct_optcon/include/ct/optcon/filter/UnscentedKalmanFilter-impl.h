@@ -56,11 +56,12 @@ UnscentedKalmanFilter<STATE_DIM, CONTROL_DIM, OUTPUT_DIM, SCALAR>::UnscentedKalm
     std::shared_ptr<SystemModelBase<STATE_DIM, CONTROL_DIM, SCALAR>> f,
     std::shared_ptr<LinearMeasurementModel<OUTPUT_DIM, STATE_DIM, SCALAR>> h,
     const state_vector_t& x0,
+    const ct::optcon::EstimatorStateBoxConstraint<STATE_DIM, SCALAR>& box_constraint,
     SCALAR alpha,
     SCALAR beta,
     SCALAR kappa,
     const ct::core::StateMatrix<STATE_DIM, SCALAR>& P0)
-    : Base(f, h, x0), alpha_(alpha), beta_(beta), kappa_(kappa), P_(P0)
+    : Base(f, h, x0, box_constraint), alpha_(alpha), beta_(beta), kappa_(kappa), P_(P0)
 {
     computeWeights();
 }
@@ -69,8 +70,9 @@ template <size_t STATE_DIM, size_t CONTROL_DIM, size_t OUTPUT_DIM, typename SCAL
 UnscentedKalmanFilter<STATE_DIM, CONTROL_DIM, OUTPUT_DIM, SCALAR>::UnscentedKalmanFilter(
     std::shared_ptr<SystemModelBase<STATE_DIM, CONTROL_DIM, SCALAR>> f,
     std::shared_ptr<LinearMeasurementModel<OUTPUT_DIM, STATE_DIM, SCALAR>> h,
-    const UnscentedKalmanFilterSettings<STATE_DIM, SCALAR>& ukf_settings)
-    : Base(f, h, ukf_settings.x0),
+    const UnscentedKalmanFilterSettings<STATE_DIM, SCALAR>& ukf_settings,
+    const ct::optcon::EstimatorStateBoxConstraint<STATE_DIM, SCALAR>& box_constraint)
+    : Base(f, h, ukf_settings.x0, box_constraint),
       alpha_(ukf_settings.alpha),
       beta_(ukf_settings.beta),
       kappa_(ukf_settings.kappa),
@@ -116,6 +118,15 @@ auto UnscentedKalmanFilter<STATE_DIM, CONTROL_DIM, OUTPUT_DIM, SCALAR>::update(c
     // Update state
     this->x_est_ += K * (z - y);
 
+    // State clipping applied to the updated state estimate
+    // See R. Kandepu, L. Imsland and B. A. Foss, "Constrained state estimation using the Unscented Kalman Filter,"
+    // 2008 16th Mediterranean Conference on Control and Automation, 2008, pp. 1453-1458, doi: 10.1109/MED.2008.4602001.
+    if (this->box_constraint_.not_empty())
+    {
+        this->x_est_ = this->box_constraint_.stateClipping(this->x_est_);
+    }
+
+
     // Update state covariance
     updateStateCovariance(K, P);
 
@@ -139,6 +150,19 @@ bool UnscentedKalmanFilter<STATE_DIM, CONTROL_DIM, OUTPUT_DIM, SCALAR>::computeS
     this->sigmaStatePoints_.template block<STATE_DIM, STATE_DIM>(0, 1) = (gamma_ * _S).colwise() + this->x_est_;
     // Set right block with x - gamma_ * S
     this->sigmaStatePoints_.template rightCols<STATE_DIM>() = (-gamma_ * _S).colwise() + this->x_est_;
+
+    // State clipping applied to sigma points
+    // See R. Kandepu, L. Imsland and B. A. Foss, "Constrained state estimation using the Unscented Kalman Filter,"
+    // 2008 16th Mediterranean Conference on Control and Automation, 2008, pp. 1453-1458, doi: 10.1109/MED.2008.4602001.
+    if (this->box_constraint_.not_empty())
+    {
+        for (size_t i_sigma_point = 0; i_sigma_point < SigmaPointCount; i_sigma_point++)
+        {
+            this->sigmaStatePoints_.col(i_sigma_point) =
+                this->box_constraint_.stateClipping(this->sigmaStatePoints_.col(i_sigma_point));
+        }
+    }
+
 
     return true;
 }
@@ -233,7 +257,7 @@ void UnscentedKalmanFilter<STATE_DIM, CONTROL_DIM, OUTPUT_DIM, SCALAR>::computeW
     sigmaWeights_m_[0] = W_m_0;
     sigmaWeights_c_[0] = W_c_0;
 
-    for (int i = 1; i < SigmaPointCount; ++i)
+    for (size_t i = 1; i < SigmaPointCount; ++i)
     {
         sigmaWeights_m_[i] = W_i;
         sigmaWeights_c_[i] = W_i;

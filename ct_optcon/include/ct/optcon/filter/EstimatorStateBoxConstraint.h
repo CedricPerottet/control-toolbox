@@ -47,6 +47,8 @@ public:
 
     state_vector_t stateClipping(const state_vector_t& x);
 
+    bool not_empty() { return has_constraints_; }
+
 private:
     bool has_constraints_;
     VectorXs lb_;
