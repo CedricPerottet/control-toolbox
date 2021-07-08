@@ -239,13 +239,13 @@ void UnscentedKalmanFilter<STATE_DIM, CONTROL_DIM, OUTPUT_DIM, SCALAR>::computeW
 {
     SCALAR L = SCALAR(STATE_DIM);
     lambda_ = alpha_ * alpha_ * (L + kappa_) - L;
-    gamma_ = std::sqrt(L + lambda_);
+    gamma_ = sqrt(L + lambda_);
 
     // Make sure L != -lambda_ to avoid division by zero
-    assert(std::abs(L + lambda_) > 1e-6);
+    assert(abs(L + lambda_) > 1e-6);
 
     // Make sure L != -kappa_ to avoid division by zero
-    assert(std::abs(L + kappa_) > 1e-6);
+    assert(abs(L + kappa_) > 1e-6);
 
     SCALAR W_m_0 = lambda_ / (L + lambda_);
     SCALAR W_c_0 = W_m_0 + (SCALAR(1) - alpha_ * alpha_ + beta_);

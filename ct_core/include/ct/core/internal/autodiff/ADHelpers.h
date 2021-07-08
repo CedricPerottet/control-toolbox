@@ -9,6 +9,22 @@ namespace ct {
 namespace core {
 namespace ADHelperFunctions {
 
+template <typename SCALAR, typename T>
+SCALAR convert_to_scalar(const T& x)
+{
+    return SCALAR(x);
+}
+
+#ifdef CPPAD
+// Specialization for Cpp::AD that has no implicit conversion to scalar
+template <typename SCALAR>
+SCALAR convert_to_scalar(const CppAD::AD<SCALAR>& ad_scalar)
+{
+    return CppAD::Value(CppAD::Var2Par(ad_scalar));
+}
+#endif
+
+
 }  // namespace ADHelperFunctions
 
 class ADHelpers
@@ -16,5 +32,5 @@ class ADHelpers
 public:
 private:
 };
-}
-}
+}  // namespace core
+}  // namespace ct

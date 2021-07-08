@@ -21,6 +21,10 @@ add_executable(ex_UKF UnscentedKalmanFiltering.cpp)
 target_link_libraries(ex_UKF ct_optcon)
 list(APPEND optcon_ex_TARGETS ex_UKF)
 
+add_executable(ex_UKFAD UnscentedKalmanFilteringAD.cpp)
+target_link_libraries(ex_UKFAD ct_optcon)
+list(APPEND optcon_ex_TARGETS ex_UKFAD)
+
 # add_executable(ex_KalmanDisturbanceFiltering KalmanDisturbanceFiltering.cpp)
 # target_link_libraries(ex_KalmanDisturbanceFiltering ct_optcon )
 # list(APPEND optcon_ex_TARGETS ex_KalmanDisturbanceFiltering)

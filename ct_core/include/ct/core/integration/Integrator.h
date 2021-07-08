@@ -285,6 +285,13 @@ private:
     {
     }
 
+#ifdef CPPAD
+    template <typename S = SCALAR>
+    typename std::enable_if<std::is_same<S, ADScalar>::value, void>::type initializeODEIntSteppers(
+        const IntegrationType& intType)
+    {
+    }
+#endif
 #ifdef CPPADCG
     template <typename S = SCALAR>
     typename std::enable_if<std::is_same<S, ADCGScalar>::value, void>::type initializeODEIntSteppers(
@@ -378,5 +385,5 @@ private:
     std::shared_ptr<internal::StepperBase<Eigen::Matrix<SCALAR, STATE_DIM, 1>, SCALAR>> integratorStepper_;
     Observer<STATE_DIM, SCALAR> observer_;  //! observer
 };
-}
-}
+}  // namespace core
+}  // namespace ct

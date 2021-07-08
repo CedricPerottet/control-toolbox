@@ -24,9 +24,9 @@ struct LineSearchSettings
     //! types of backtracking line-search
     enum TYPE
     {
-        NONE = 0,      //! take full-step updates
-        SIMPLE,        //! simple backtracking using cost or merit function
-        ARMIJO,        //! backtracking including riccati matrix measure
+        NONE = 0,   //! take full-step updates
+        SIMPLE,     //! simple backtracking using cost or merit function
+        ARMIJO,     //! backtracking including riccati matrix measure
         GOLDSTEIN,  //! backtracking including riccati matrix measure and defects
         NUM_TYPES
     };
@@ -218,7 +218,7 @@ public:
         HPIPM_SOLVER = 1
     };
 
-    using APPROXIMATION = typename core::SensitivityApproximationSettings::APPROXIMATION;
+    using APPROXIMATION = typename core::SensitivityApproximationSettings<double>::APPROXIMATION;
 
     //! NLOptCon Settings default constructor
     /*!

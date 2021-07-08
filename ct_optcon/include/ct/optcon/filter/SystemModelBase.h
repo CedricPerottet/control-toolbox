@@ -24,7 +24,7 @@ public:
     using state_vector_t = ct::core::StateVector<STATE_DIM, SCALAR>;
     using state_matrix_t = ct::core::StateMatrix<STATE_DIM, SCALAR>;
     using control_vector_t = ct::core::ControlVector<CONTROL_DIM, SCALAR>;
-    using Time_t = SCALAR;
+    using Time_t = ct::core::Time;
 
     //! Virtual destructor.
     virtual ~SystemModelBase() = default;

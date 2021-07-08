@@ -9,8 +9,10 @@ namespace ct {
 namespace core {
 
 //! settings for the SensitivityApproximation
-struct SensitivityApproximationSettings
+template <typename SCALAR>
+class SensitivityApproximationSettings
 {
+public:
     //! different discrete-time approximations to linear systems
     enum class APPROXIMATION
     {
@@ -21,9 +23,9 @@ struct SensitivityApproximationSettings
         MATRIX_EXPONENTIAL
     };
 
-    SensitivityApproximationSettings(double dt, APPROXIMATION approx) : dt_(dt), approximation_(approx) {}
+    SensitivityApproximationSettings(SCALAR dt, APPROXIMATION approx) : dt_(dt), approximation_(approx) {}
     //! discretization time-step
-    double dt_;
+    SCALAR dt_;
 
     //! type of discretization strategy used.
     APPROXIMATION approximation_;
@@ -37,7 +39,7 @@ public:
 
     typedef std::shared_ptr<StateVectorArray<STATE_DIM, SCALAR>> StateVectorArrayPtr;
     typedef std::shared_ptr<ControlVectorArray<CONTROL_DIM, SCALAR>> ControlVectorArrayPtr;
-
+    using SensitivityApproximationSettings_t = SensitivityApproximationSettings<SCALAR>;
 
     Sensitivity() : xSubstep_(nullptr), uSubstep_(nullptr) {}
     virtual ~Sensitivity() {}
@@ -52,7 +54,7 @@ public:
     virtual void setTimeDiscretization(const SCALAR& dt) = 0;
 
     //! update the approximation type for the discrete-time system
-    virtual void setApproximation(const SensitivityApproximationSettings::APPROXIMATION& approx) {}
+    virtual void setApproximation(const typename SensitivityApproximationSettings_t::APPROXIMATION& approx) {}
     /*!
 	 * Set the trajectory reference for linearization. This should also include potential substeps that the integrator produces.
 	 * @param x
@@ -87,5 +89,5 @@ protected:
     std::vector<StateVectorArrayPtr, Eigen::aligned_allocator<StateVectorArrayPtr>>* xSubstep_;
     std::vector<ControlVectorArrayPtr, Eigen::aligned_allocator<ControlVectorArrayPtr>>* uSubstep_;
 };
-}
-}
+}  // namespace core
+}  // namespace ct

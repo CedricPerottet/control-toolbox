@@ -36,20 +36,20 @@ public:
 
     typedef StateMatrix<STATE_DIM, SCALAR> state_matrix_t;                              //!< state Jacobian type
     typedef StateControlMatrix<STATE_DIM, CONTROL_DIM, SCALAR> state_control_matrix_t;  //!< input Jacobian type
-
+    typedef SensitivityApproximationSettings<SCALAR> SensitivityApproximationSettings_t;
 
     //! constructor
     SensitivityApproximation(const SCALAR& dt,
         const std::shared_ptr<LinearSystem<STATE_DIM, CONTROL_DIM, SCALAR>>& linearSystem = nullptr,
-        const SensitivityApproximationSettings::APPROXIMATION& approx =
-            SensitivityApproximationSettings::APPROXIMATION::FORWARD_EULER)
+        const typename SensitivityApproximationSettings_t::APPROXIMATION& approx =
+            SensitivityApproximationSettings_t::APPROXIMATION::FORWARD_EULER)
         : linearSystem_(linearSystem), settings_(dt, approx)
     {
     }
 
 
     //! constructor
-    SensitivityApproximation(const SensitivityApproximationSettings& settings,
+    SensitivityApproximation(const SensitivityApproximationSettings_t& settings,
         const std::shared_ptr<LinearSystem<STATE_DIM, CONTROL_DIM, SCALAR>>& linearSystem = nullptr)
         : linearSystem_(linearSystem), settings_(settings)
     {
@@ -76,14 +76,17 @@ public:
 
 
     //! update the approximation type for the discrete-time system
-    virtual void setApproximation(const SensitivityApproximationSettings::APPROXIMATION& approx) override
+    virtual void setApproximation(const typename SensitivityApproximationSettings_t::APPROXIMATION& approx) override
     {
         settings_.approximation_ = approx;
     }
 
 
     //! retrieve the approximation type for the discrete-time system
-    SensitivityApproximationSettings::APPROXIMATION getApproximation() const { return settings_.approximation_; }
+    typename SensitivityApproximationSettings_t::APPROXIMATION getApproximation() const
+    {
+        return settings_.approximation_;
+    }
     //! update the linear system
     virtual void setLinearSystem(
         const std::shared_ptr<LinearSystem<STATE_DIM, CONTROL_DIM, SCALAR>>& linearSystem) override
@@ -95,7 +98,7 @@ public:
     //! update the time discretization
     virtual void setTimeDiscretization(const SCALAR& dt) override { settings_.dt_ = dt; }
     //! update the settings
-    void updateSettings(const SensitivityApproximationSettings& settings) { settings_ = settings; }
+    void updateSettings(const SensitivityApproximationSettings_t& settings) { settings_ = settings; }
     //! get A and B matrix for linear time invariant system
     /*!
 	 * compute discrete-time linear system matrices A and B
@@ -122,22 +125,22 @@ public:
 		 */
         switch (settings_.approximation_)
         {
-            case SensitivityApproximationSettings::APPROXIMATION::FORWARD_EULER:
+            case SensitivityApproximationSettings_t::APPROXIMATION::FORWARD_EULER:
             {
                 forwardEuler(x, u, n, A, B);
                 break;
             }
-            case SensitivityApproximationSettings::APPROXIMATION::BACKWARD_EULER:
+            case SensitivityApproximationSettings_t::APPROXIMATION::BACKWARD_EULER:
             {
                 backwardEuler(x, u, n + 1, A, B);
                 break;
             }
-            case SensitivityApproximationSettings::APPROXIMATION::SYMPLECTIC_EULER:
+            case SensitivityApproximationSettings_t::APPROXIMATION::SYMPLECTIC_EULER:
             {
                 symplecticEuler<V_DIM, P_DIM>(x, u, x_next, n, A, B);
                 break;
             }
-            case SensitivityApproximationSettings::APPROXIMATION::TUSTIN:
+            case SensitivityApproximationSettings_t::APPROXIMATION::TUSTIN:
             {
                 /*!
                  * the Tustin (also known as 'Heun') approximation uses the state and control at the *start* and at the *end*
@@ -164,7 +167,7 @@ public:
                 B = aNewInv * settings_.dt_ * Bc_front;
                 break;
             }
-            case SensitivityApproximationSettings::APPROXIMATION::MATRIX_EXPONENTIAL:
+            case SensitivityApproximationSettings_t::APPROXIMATION::MATRIX_EXPONENTIAL:
             {
                 matrixExponential(x, u, n, A, B);
                 break;
@@ -216,8 +219,9 @@ private:
         B_discr = A_discr * settings_.dt_ * B_cont;
     }
 
-
-    void matrixExponential(const StateVector<STATE_DIM, SCALAR>& x_n,
+    template <typename S = SCALAR>
+    typename std::enable_if<std::is_same<S, double>::value, void>::type matrixExponential(
+        const StateVector<STATE_DIM, SCALAR>& x_n,
         const ControlVector<CONTROL_DIM, SCALAR>& u_n,
         const int& n,
         state_matrix_t& A_discr,
@@ -228,10 +232,22 @@ private:
         linearSystem_->getDerivatives(Ac, Bc, x_n, u_n, n * settings_.dt_);
 
         state_matrix_t Adt = settings_.dt_ * Ac;
-
-        A_discr.template topLeftCorner<STATE_DIM, STATE_DIM>() = Adt.exp();
+        A_discr.template topLeftCorner<STATE_DIM, STATE_DIM>() = Adt.exp();  // exp method not usable with CppAD::AD
         B_discr.template topLeftCorner<STATE_DIM, CONTROL_DIM>() =
             Ac.inverse() * (A_discr - state_matrix_t::Identity()) * Bc;
+    }
+
+    template <typename S = SCALAR>
+    typename std::enable_if<!std::is_same<S, double>::value, void>::type matrixExponential(
+        const StateVector<STATE_DIM, SCALAR>& x_n,
+        const ControlVector<CONTROL_DIM, SCALAR>& u_n,
+        const int& n,
+        state_matrix_t& A_discr,
+        state_control_matrix_t& B_discr)
+    {
+        throw std::runtime_error(
+            "SensitivityApproximation : Trying to use matrixExponential as "
+            "approximation with template SCALAR different from double is forbidden.");
     }
 
 
@@ -380,7 +396,7 @@ private:
     std::shared_ptr<LinearSystem<STATE_DIM, CONTROL_DIM, SCALAR>> linearSystem_;
 
     //! discretization settings
-    SensitivityApproximationSettings settings_;
+    SensitivityApproximationSettings_t settings_;
 };
 
 
