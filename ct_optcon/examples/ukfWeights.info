@@ -8,9 +8,9 @@ kalman_weights
   }
   R
   {
-    scaling 0.01
-    (0,0) 0.01
-    (1,1) 0.01
+    scaling 0.1
+    (0,0) 0.05
+    (1,1) 1.0
   }
 }
 
@@ -18,7 +18,7 @@ process_noise
 {
   process_var
   {
-    scaling 0.1
+    scaling 0.0001
     (0,0) 0.05
     (1,1) 1.0
   }
@@ -30,6 +30,6 @@ measurement_noise
   {
     scaling 1.0
     (0,0) 0.05
-    (1,1) 1.0
+    (1,1) 0.1
   }
 }

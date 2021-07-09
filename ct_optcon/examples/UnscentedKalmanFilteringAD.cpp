@@ -37,7 +37,7 @@ int main(int argc, char** argv)
     std::shared_ptr<SecondOrderSystemAD> oscillator(new SecondOrderSystemAD(w_n));
 
     // create an integrator for "simulating" the measured data
-    ct::core::Integrator<state_dim, SCALAR_AD> integrator(oscillator, ct::core::IntegrationType::EULERCT);
+    ct::core::Integrator<state_dim, SCALAR_AD> integrator(oscillator, ct::core::IntegrationType::RK4CT);
 
     ct::core::StateVectorArray<state_dim, SCALAR_AD> states;
     ct::core::ControlVectorArray<control_dim, SCALAR_AD> controls;
@@ -68,11 +68,11 @@ int main(int argc, char** argv)
     // load Kalman Filter weighting matrices from file
     ct::core::StateMatrix<state_dim, SCALAR_AD> Q, dFdv;
     ct::core::OutputMatrix<output_dim, SCALAR_AD> R;
-    dFdv.setIdentity();
     ct::core::loadMatrix(settingsFile, "kalman_weights.Q", Q);
     ct::core::loadMatrix(settingsFile, "kalman_weights.R", R);
     std::cout << "Loaded Kalman R as " << std::endl << R << std::endl;
     std::cout << "Loaded Kalman Q as " << std::endl << Q << std::endl;
+    dFdv = Q;
 
     // create a sensitivity approximator to compute A and B matrices
     std::shared_ptr<ct::core::SystemLinearizer<state_dim, control_dim, SCALAR_AD>> linearizer(
@@ -93,7 +93,7 @@ int main(int argc, char** argv)
 
     // set up the measurement model
     ct::core::OutputMatrix<output_dim, SCALAR_AD> dHdw;
-    dHdw.setIdentity();
+    dHdw = R;
     std::shared_ptr<ct::optcon::LinearMeasurementModel<output_dim, state_dim, SCALAR_AD>> measModel(
         new ct::optcon::LTIMeasurementModel<output_dim, state_dim, SCALAR_AD>(C, dHdw));
 

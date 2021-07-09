@@ -17,7 +17,7 @@ Licensed under the BSD-2 license (see LICENSE file in main directory)
 int main(int argc, char** argv)
 {
     // file with kalman weights
-    std::string settingsFile = ct::optcon::exampleDir + "/kalmanFilterWeights.info";
+    std::string settingsFile = ct::optcon::exampleDir + "/ukfWeights.info";
 
     // a damped oscillator has two states, position and velocity
     const size_t state_dim = ct::core::SecondOrderSystem::STATE_DIM;      // = 2
@@ -44,7 +44,7 @@ int main(int argc, char** argv)
     oscillator->setController(controller);
 
     // create an integrator for "simulating" the measured data
-    ct::core::Integrator<state_dim> integrator(oscillator, ct::core::IntegrationType::RK4);
+    ct::core::Integrator<state_dim> integrator(oscillator, ct::core::IntegrationType::RK4CT);
 
     ct::core::StateVectorArray<state_dim> states;
     ct::core::ControlVectorArray<control_dim> controls;
@@ -83,11 +83,11 @@ int main(int argc, char** argv)
     // load Kalman Filter weighting matrices from file
     ct::core::StateMatrix<state_dim> Q, dFdv;
     ct::core::OutputMatrix<output_dim> R;
-    dFdv.setIdentity();
     ct::core::loadMatrix(settingsFile, "kalman_weights.Q", Q);
     ct::core::loadMatrix(settingsFile, "kalman_weights.R", R);
     std::cout << "Loaded Kalman R as " << std::endl << R << std::endl;
     std::cout << "Loaded Kalman Q as " << std::endl << Q << std::endl;
+    dFdv = Q;
 
     // create a sensitivity approximator to compute A and B matrices
     std::shared_ptr<ct::core::SystemLinearizer<state_dim, control_dim>> linearizer(
@@ -106,14 +106,14 @@ int main(int argc, char** argv)
 
     // set up the measurement model
     ct::core::OutputMatrix<output_dim> dHdw;
-    dHdw.setIdentity();
+    dHdw = R;
     std::shared_ptr<ct::optcon::LinearMeasurementModel<output_dim, state_dim>> measModel(
         new ct::optcon::LTIMeasurementModel<output_dim, state_dim>(C, dHdw));
 
     // set up state constraint
     ct::core::StateVector<state_dim> lb, ub;
-    lb << -4.0, -4.0;
-    ub << 5.0, 5.0;
+    lb << -24.0, -24.0;
+    ub << 25.0, 25.0;
     ct::optcon::EstimatorStateBoxConstraint<state_dim> box_constraint(lb, ub);
 
     // set up Filter : Unscented Kalman filter
